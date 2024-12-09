@@ -58,7 +58,7 @@ public class Othello {
         }
         board[row][col] = this.getToken();
         for (int i = 0; i < 8; i++) {
-            flip(row, col, dy[i], dx[i], board[row][col]);
+            board = flip(row, col, dy[i], dx[i], board[row][col], board);
         }
         if (checkWinner() == 0) {
             turn = !turn;
@@ -172,11 +172,11 @@ public class Othello {
      * @param dx
      * @param token
      */
-    public void flip(int row, int col, int dy, int dx, String token) {
+    public String[][] flip(int row, int col, int dy, int dx, String token, String[][] board) {
         int newR = row + dy;
         int newC = col + dx;
         if (newR < 0 || newR >= 8 || newC < 0 || newC >= 8) {
-            return;
+            return board;
         }
         while (!board[newR][newC].equals(".")) {
             if (board[newR][newC].equals(token)) { // see same token
@@ -194,6 +194,7 @@ public class Othello {
                 break;
             }
         }
+        return board;
     }
 
     /**
@@ -348,4 +349,15 @@ public class Othello {
         o.setTurn(true);
     }
 
+    public String[][] possibleBoard(int row, int col, String token) {
+        String[][] possibleBoard = get2DBoard();
+        if (!isValidMove(row, col, turn) || gameOver) {
+            return possibleBoard;
+        }
+        possibleBoard[row][col] = token;
+        for (int i = 0; i < 8; i++) {
+            possibleBoard = flip(row, col, dy[i], dx[i], token, possibleBoard);
+        }
+        return possibleBoard;
+    }
 }

@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.Array;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class GameBoardAI extends GameBoard {
 
@@ -17,8 +18,8 @@ public class GameBoardAI extends GameBoard {
     private boolean humanIsBlack;
 
     private LinkedList<Coordinate> corner_points;
-    private LinkedList<Coordinate> xSq;
-    private LinkedList<Coordinate> cSq;
+    private int[] xSq;
+    private int[] cSq;
     private HashMap<Coordinate, Coordinate> square;
     private HashMap<String, Coordinate> openingbook;
 
@@ -89,8 +90,8 @@ public class GameBoardAI extends GameBoard {
 
     private void converter() {
         corner_points = intToCoordinateList(new int[] { 0, 7, 56, 63 });
-        xSq = intToCoordinateList(new int[] { 9, 14, 49, 54 });
-        cSq = intToCoordinateList(new int[] { 1, 8, 6, 15, 62, 48, 55, 57 });
+        xSq = new int[] { 9, 14, 49, 54 };
+        cSq = new int[] { 1, 8, 6, 15, 62, 48, 55, 57 };
         openingbook = new HashMap<>();
 
         openingbook.put(
@@ -159,7 +160,6 @@ public class GameBoardAI extends GameBoard {
      */
     public Coordinate getBestMove() {
         Coordinate bestMove = null;
-        LinkedList<Coordinate> listOfMoves = othello.getListofMoves();
         boolean opp = !othello.getTurn();
         boolean token = othello.getTurn();
 
@@ -192,6 +192,7 @@ public class GameBoardAI extends GameBoard {
         if (depth == 0) {
             ArrayList<Integer> result = new ArrayList<Integer>();
             result.add(scoreCalc(board, token, listOfMoves));
+            System.out.println(result.get(0));
             return result;
         }
         if (listOfMoves.isEmpty()) {
@@ -211,9 +212,7 @@ public class GameBoardAI extends GameBoard {
         ArrayList<Integer> best = new ArrayList<Integer>();
         best.add(beta-1);
         for (Coordinate c : listOfMoves) {
-            othello.playTurn(c.getRow(), c.getCol());
-            ArrayList<Integer> mg = midgame(othello.get2DBoard(), opp, -alpha, -beta, depth-1);
-            othello.undo();
+            ArrayList<Integer> mg = midgame(othello.possibleBoard(c.getRow(), c.getCol(), othello.getToken()), opp, -alpha, -beta, depth-1);
             int score = -mg.get(0);
             if (score < beta) {
                 continue;
@@ -238,24 +237,46 @@ public class GameBoardAI extends GameBoard {
         int score = 0;
 
         othello.setTurn(opp);
-        int oppMoveLen = othello.getListofMoves().size();
+        int mobility = othello.getListofMoves().size();
         othello.setTurn(token);
 
-        String tokenString = token ? "X" : "O";
-        String oppString = opp ? "X" : "O";
+        char tokenString = token ? 'X' : 'O';
+        char oppString = opp ? 'X' : 'O';
 
-        score = 3*(-oppMoveLen);
+        String boardString = othello.getBoard(board);
 
-        int cornerCount = 0;
+        int cornerCount = cornerScore(boardString, tokenString) - cornerScore(boardString, oppString);
+        score = score + 10*cornerCount - 50*mobility; // corners are prized!
+        return score;
+    }
+
+    private int cornerScore(String boardString, char token) {
+        ArrayList<Integer> corner = new ArrayList<Integer>();
+        int score = 0;
         for (Coordinate c : corner_points) {
-            if (board[c.getRow()][c.getCol()].equals(tokenString)) {
-                cornerCount++;
-            }
-            else if (board[c.getRow()][c.getCol()].equals(oppString)) {
-                cornerCount--;
+            int index = c.getRow()*8+c.getCol();
+            if (boardString.charAt(index) == token) {
+                score += 100;
+                corner.add(index);
             }
         }
-        score += 100*cornerCount; // corners are prized!
+        for (Map.Entry<Coordinate, Coordinate> entry : square.entrySet()) {
+            int key = entry.getKey().getRow()*8+entry.getKey().getCol();
+            int value = entry.getValue().getRow()*8+entry.getValue().getCol();
+            if (boardString.charAt(key) == token) {
+                if (corner.contains(value)) {
+                    score += 150;
+                }
+                else {
+                    if (IntStream.of(cSq).anyMatch(x -> x == key)) {
+                        score -= 15;
+                    }
+                    else if (IntStream.of(xSq).anyMatch(x -> x == key)) {
+                        score -= 90;
+                    }
+                }
+            }
+        }
         return score;
     }
 
@@ -287,9 +308,7 @@ public class GameBoardAI extends GameBoard {
         ArrayList<Integer> best = new ArrayList<Integer>();
         best.add(beta-1);
         for (Coordinate c : listOfMoves) {
-            othello.playTurn(c.getRow(), c.getCol());
-            ArrayList<Integer> ab = alphabeta(othello.get2DBoard(), opp, -alpha, -beta, false);
-            othello.undo();
+            ArrayList<Integer> ab = alphabeta(othello.possibleBoard(c.getRow(), c.getCol(), othello.getToken()), opp, -alpha, -beta, false);
             int score = -ab.get(0);
             if (score < beta) {
                 continue;
@@ -326,5 +345,17 @@ public class GameBoardAI extends GameBoard {
         if (!humanIsBlack) {
             makeAIMove();
         }
+    }
+
+    @Override
+    public void undo() {
+        othello.undo();
+        if (othello.getTurn() == humanIsBlack) {
+            makeAIMove();
+        }
+        updateStatus();
+        updateMoves();
+        repaint();
+        requestFocusInWindow();
     }
 }
