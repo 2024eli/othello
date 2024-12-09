@@ -50,15 +50,32 @@ PennKey: eli22ß
 - Provide an overview of each of the classes in your code, and what their
   function is in the overall game.
 
-I have a Coordinate, GameBoard, Othello, RunOthello, and Game class.
+I have a Coordinate, GameBoard, Othello, RunOthello, and Game class. In the Coordinate class, we represent positions on
+an Othello game board. It stores the x and y coordinates for a grid. In the GameBoard class, we manage the Othello
+board. It maintains the graphical representation and user interaction. It handles mouseclicks, paints the game board,
+updates game status and move history, and provides some methods for game control. The Othello class implements core
+game logic. It uses a 2D array representation of the board and implements turn taking and piece flipping. The RunOthello
+class is the entry point for the game and UI setup. It displays the intro frame as well as the main game frame. It also
+manages game mode selections.
 
 - Were there any significant stumbling blocks while you were implementing your
   game (related to your design, or otherwise)?
+
+  I had a few issues implementing the game logic to flip tokens. I also had a few problems covering the edge cases like
+  different cases of ending the game, passing to the other player, etc. I also had some pretty big problems reaching my
+  stretch goal of implementing AI. My alpha beta pruning doesn't work entirely, but most of the code works. However,
+  edge cases like undo, reset, save, and load game aren't fully working for the AI game mode.
 
 
 - Evaluate your design. Is there a good separation of functionality? How well is
   private state encapsulated? What would you refactor, if given the chance?
 
+  The current design shows a good separation of functionality. The Othello class holds the game logic and state and can
+  be tested without any involvement with the GUI. The GameBoard class handles the view and controller aspects. Private
+  states are well encapsulated as the Othello class keeps the board state private, only providing getters and setters
+  for interaction. I could potentially consider refactoring so that more methods in the Othello class could be used to
+  modify the internal state of an Othello model, but also if I were to use it to selectly test parts of the class
+  without changing the entire game state.
 
 
 ========================
@@ -67,3 +84,6 @@ I have a Coordinate, GameBoard, Othello, RunOthello, and Game class.
 
 - Cite any external resources (images, tutorials, etc.) that you may have used 
   while implementing your game.
+
+  Official othello game rules:
+  https://www.worldothello.org/about/about-othello/othello-rules/official-rules/english

@@ -225,6 +225,7 @@ public class Othello {
 
     /**
      * show valid moves at any point in the game for player of turn
+     * 
      * @return a list of valid moves at that point
      */
     public LinkedList<Coordinate> getListofMoves() {
